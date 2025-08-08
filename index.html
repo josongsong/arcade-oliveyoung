@@ -210,13 +210,13 @@
         // --- 게임 주요 설정 ---
         const OLIVE_GREEN = '#79B82D';
         let score = 0;
-        const initialSpeed = 5; // 초기 속도 하향 조정
+        const initialSpeed = 3;
         let gameSpeed = initialSpeed;
         let isGameOver = false;
-        const gravity = 0.5; // 중력 하향 조정
+        const gravity = 0.4;
         const jumpPower = -7.2;
         let gameState = 'LANDING';
-        let lastTime = 0; // Delta time 추적용
+        let lastTime = 0;
 
         // --- 글로벌 랭킹 (JSONBin.io) 설정 ---
         const API_KEY = '$2a$10$AvUCI3Xmmj1hi3F64HcG8O69aYFWTj2CpOH4ut.nL3kGnGfb6eN6i';
@@ -360,7 +360,10 @@
 
                 if(item.type === 'special') {
                     ctx.fillStyle = item.color;
-                    ctx.fillRect(item.x, item.y, ITEM_SIZE, ITEM_SIZE);
+                    ctx.beginPath();
+                    ctx.arc(item.x + ITEM_SIZE / 2, item.y + ITEM_SIZE / 2, ITEM_SIZE / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
                     ctx.fillStyle = '#FFFFFF';
                     ctx.font = '14px "Press Start 2P"';
                     ctx.textAlign = 'center';
@@ -514,9 +517,11 @@
             }
             requestAnimationFrame(gameLoop);
 
-            const deltaTime = (currentTime - lastTime) || 0;
+            let deltaTime = (currentTime - lastTime) || 0;
+            // 프레임 드랍 시 큰 점프를 방지하기 위해 deltaTime에 상한선을 둡니다 (40ms -> 25fps).
+            deltaTime = Math.min(deltaTime, 40);
             lastTime = currentTime;
-            const deltaMultiplier = deltaTime / (1000 / 60); // 60FPS 기준 보정값
+            const deltaMultiplier = deltaTime / (1000 / 60);
 
             ctx.clearRect(0, 0, 800, 400);
             player.update(deltaMultiplier);
@@ -623,7 +628,7 @@
             isGameOver = false;
             gameState = 'PLAYING';
             nameForm.style.display = 'none';
-            lastTime = 0; // lastTime 초기화
+            lastTime = 0;
             requestAnimationFrame(gameLoop);
         }
 
@@ -673,6 +678,7 @@
         const startGameBtn = document.getElementById('start-game-btn');
 
         startGameBtn.addEventListener('click', async () => {
+            initAudio(); // 사파리 호환성을 위해 첫 사용자 인터랙션 시 오디오 컨텍스트 초기화
             landingPage.style.display = 'none';
             gameWrapper.style.display = 'block';
             await drawStartScreen();
