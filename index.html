@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Oliveyoung 세계정복 준법경영 아케이드</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🫒</text></svg>">
-    
-    <title>Oliveyoung 준법경영 아케이드</title>
     <style>
         /* 8비트 픽셀 폰트 임포트 */
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -198,7 +196,8 @@
         // --- 게임 주요 설정 ---
         const OLIVE_GREEN = '#79B82D';
         let score = 0;
-        let gameSpeed = 4;
+        const initialSpeed = 4;
+        let gameSpeed = initialSpeed;
         let isGameOver = false;
         const gravity = 0.5;
         const jumpPower = -7.2; // 점프 탄성 80%로 조정 (난이도 하향)
@@ -375,10 +374,11 @@
                     if (item.type === 'special' && !collectedSpecialItemIndices.includes(item.index)) {
                         playItemSound(true);
                         collectedSpecialItemIndices.push(item.index);
+                        score += 10; // 특별 아이템 획득 시 10점 추가
                         
                         if (collectedSpecialItemIndices.length === SPECIAL_ITEMS.length) {
                             completedSpecialQuest = true;
-                            score += 100;
+                            score += 100; // 최종 퀘스트 완료 보너스
                             triggerFireworks(item.x, item.y, 150);
                         } else {
                             triggerFireworks(item.x, item.y, 50);
@@ -386,7 +386,7 @@
 
                     } else if (item.type === 'normal') {
                         playItemSound(false);
-                        score += 5;
+                        score += 5; // 일반 아이템 획득 시 5점 추가
                     }
                     items.splice(i, 1);
                 }
@@ -462,10 +462,19 @@
             }
         }
         function updateScore() {
+            const targetSpeed = initialSpeed * 1.7;
+            const targetScore = 50;
+            const speedIncreasePerPoint = (targetSpeed - initialSpeed) / targetScore;
+
             obstacles.forEach(o => {
                 if (!o.passed && player.x > o.x + o.width) {
-                    score++; o.passed = true;
-                    if (score > 0 && score % 4 === 0) { gameSpeed += 0.3; }
+                    score++; 
+                    o.passed = true;
+                    
+                    // 점수가 50에 도달할 때까지 점수에 비례하여 속도 증가
+                    if (score <= targetScore) {
+                        gameSpeed = initialSpeed + (score * speedIncreasePerPoint);
+                    }
                 }
             });
         }
@@ -576,7 +585,7 @@
             collectedSpecialItemIndices = [];
             completedSpecialQuest = false;
             score = 0;
-            gameSpeed = 4;
+            gameSpeed = initialSpeed; // 초기 속도로 리셋
             frameCount = 0;
             lastSpecialItemSpawnFrame = -999; // 쿨다운 타이머 리셋
             isGameOver = false;
