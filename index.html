@@ -349,14 +349,12 @@
                     }
                 }
                 
-                // 보너스 아이템 생성 로직
                 if (!itemSpawned && score > 30 && Math.random() < 0.15) {
                     const letter = BONUS_PHRASES[Math.floor(Math.random() * BONUS_PHRASES.length)];
                     items.push({ x: 800 + (obstacleWidth / 2), y: itemY, type: 'bonus', letter: letter });
                     itemSpawned = true;
                 }
 
-                // 일반 아이템 생성 로직
                 if (!itemSpawned && Math.random() < 0.25) {
                     items.push({ x: 800 + (obstacleWidth / 2), y: itemY, type: 'normal' });
                 }
@@ -425,7 +423,7 @@
                         }
                     } else if (item.type === 'bonus') {
                         playItemSound(true);
-                        score += 25; // 보너스 점수
+                        score += 25;
                         triggerFireworks(item.x, item.y, 75);
                     } else if (item.type === 'normal') {
                         playItemSound(false);
@@ -516,7 +514,7 @@
             }
         }
         function updateScore() {
-            const targetSpeedAt50 = initialSpeed * 1.8; // 속도 증가율 상향 조정
+            const targetSpeedAt50 = initialSpeed * 2.0; // 속도 증가율 상향 조정 (200%)
             const targetScore = 50;
             const speedIncreasePerPoint = (targetSpeedAt50 - initialSpeed) / targetScore;
 
