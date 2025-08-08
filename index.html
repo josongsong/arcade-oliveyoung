@@ -349,12 +349,14 @@
                     }
                 }
                 
-                if (!itemSpawned && score > 30 && Math.random() < 0.15) {
+                // 보너스 아이템 생성 로직: '세계정복' 퀘스트를 완료한 후에만 등장
+                if (!itemSpawned && collectedSpecialItemIndices.length === SPECIAL_ITEMS.length && Math.random() < 0.15) {
                     const letter = BONUS_PHRASES[Math.floor(Math.random() * BONUS_PHRASES.length)];
                     items.push({ x: 800 + (obstacleWidth / 2), y: itemY, type: 'bonus', letter: letter });
                     itemSpawned = true;
                 }
 
+                // 일반 아이템 생성 로직
                 if (!itemSpawned && Math.random() < 0.25) {
                     items.push({ x: 800 + (obstacleWidth / 2), y: itemY, type: 'normal' });
                 }
@@ -514,15 +516,12 @@
             }
         }
         function updateScore() {
-            const targetSpeedAt50 = initialSpeed * 2.0; // 속도 증가율 상향 조정 (200%)
-            const targetScore = 50;
-            const speedIncreasePerPoint = (targetSpeedAt50 - initialSpeed) / targetScore;
-
+            const speedIncreaseFactor = 0.04; // 점수당 속도 증가 계수 (더 가파르게)
             obstacles.forEach(o => {
                 if (!o.passed && player.x > o.x + o.width) {
                     score++; 
                     o.passed = true;
-                    gameSpeed = initialSpeed + (score * speedIncreasePerPoint);
+                    gameSpeed = initialSpeed + (score * speedIncreaseFactor);
                 }
             });
         }
