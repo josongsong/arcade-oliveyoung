@@ -308,10 +308,12 @@
         const items = [];
         const particles = [];
         const obstacleWidth = 40;
-        const obstacleGap = 160;
+        let obstacleGap = 160; // let으로 변경하여 동적으로 조절
         const ITEM_SIZE = 24;
         let frameCount = 0;
         let lastSpecialItemSpawnFrame = -999;
+        let isCelebrationTime = false;
+        let celebrationStartTime = 0;
         
         const SPECIAL_ITEMS = ['올', '영', '준', '법', '경', '영', '세', '계', '정', '복'];
         const SPECIAL_ITEM_COLORS = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#9B59B6', '#F39C12', '#1ABC9C', '#E67E22', '#3498DB', '#E91E63'];
@@ -349,14 +351,12 @@
                     }
                 }
                 
-                // 보너스 아이템 생성 로직: '세계정복' 퀘스트를 완료한 후에만 등장
                 if (!itemSpawned && collectedSpecialItemIndices.length === SPECIAL_ITEMS.length && Math.random() < 0.15) {
                     const letter = BONUS_PHRASES[Math.floor(Math.random() * BONUS_PHRASES.length)];
                     items.push({ x: 800 + (obstacleWidth / 2), y: itemY, type: 'bonus', letter: letter });
                     itemSpawned = true;
                 }
 
-                // 일반 아이템 생성 로직
                 if (!itemSpawned && Math.random() < 0.25) {
                     items.push({ x: 800 + (obstacleWidth / 2), y: itemY, type: 'normal' });
                 }
@@ -368,19 +368,8 @@
                 const item = items[i];
                 item.x -= gameSpeed * delta;
 
-                if(item.type === 'special') {
-                    ctx.fillStyle = item.color;
-                    ctx.beginPath();
-                    ctx.arc(item.x + ITEM_SIZE / 2, item.y + ITEM_SIZE / 2, ITEM_SIZE / 2, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.font = '14px "Press Start 2P"';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(item.letter, item.x + ITEM_SIZE / 2, item.y + ITEM_SIZE / 2 + 2);
-                } else if (item.type === 'bonus') {
-                    ctx.fillStyle = BONUS_ITEM_COLOR;
+                if(item.type === 'special' || item.type === 'bonus') {
+                    ctx.fillStyle = item.type === 'special' ? item.color : BONUS_ITEM_COLOR;
                     ctx.beginPath();
                     ctx.arc(item.x + ITEM_SIZE / 2, item.y + ITEM_SIZE / 2, ITEM_SIZE / 2, 0, Math.PI * 2);
                     ctx.fill();
@@ -419,7 +408,8 @@
                         if (collectedSpecialItemIndices.length === SPECIAL_ITEMS.length) {
                             completedSpecialQuest = true;
                             score += 100;
-                            triggerFireworks(item.x, item.y, 150);
+                            isCelebrationTime = true; // 5초 불꽃놀이 시작
+                            celebrationStartTime = performance.now();
                         } else {
                             triggerFireworks(item.x, item.y, 50);
                         }
@@ -516,12 +506,20 @@
             }
         }
         function updateScore() {
-            const speedIncreaseFactor = 0.04; // 점수당 속도 증가 계수 (더 가파르게)
+            const speedIncreaseFactor = 0.05; // 속도 증가율 상향
+            const gapReductionFactor = 0.5; // 장애물 간격 감소율
+            const minObstacleGap = 120; // 최소 장애물 간격
+
             obstacles.forEach(o => {
                 if (!o.passed && player.x > o.x + o.width) {
                     score++; 
                     o.passed = true;
                     gameSpeed = initialSpeed + (score * speedIncreaseFactor);
+                    
+                    // 점수가 오를수록 장애물 간격 좁히기
+                    if (obstacleGap > minObstacleGap) {
+                        obstacleGap -= gapReductionFactor;
+                    }
                 }
             });
         }
@@ -549,7 +547,22 @@
             spawnEntities();
             updateAndDrawObstacles(deltaMultiplier);
             updateAndDrawItems(deltaMultiplier);
+            
+            // 불꽃놀이 시간 처리
+            if (isCelebrationTime) {
+                const elapsedTime = performance.now() - celebrationStartTime;
+                if (elapsedTime < 5000) {
+                    if (Math.random() < 0.3) {
+                        const randomX = Math.random() * 800;
+                        const randomY = Math.random() * 400;
+                        triggerFireworks(randomX, randomY, 5);
+                    }
+                } else {
+                    isCelebrationTime = false;
+                }
+            }
             handleParticles(deltaMultiplier);
+
             checkCollision();
             checkItemCollision();
             updateScore();
@@ -643,6 +656,8 @@
             completedSpecialQuest = false;
             score = 0;
             gameSpeed = initialSpeed;
+            obstacleGap = 160; // 장애물 간격 리셋
+            isCelebrationTime = false; // 불꽃놀이 상태 리셋
             frameCount = 0;
             lastSpecialItemSpawnFrame = -999;
             isGameOver = false;
