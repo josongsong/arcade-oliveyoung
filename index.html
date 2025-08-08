@@ -192,6 +192,20 @@
             oscillator.start();
             oscillator.stop(audioCtx.currentTime + 0.3);
         }
+        function playGameOverSound() {
+            if (!isSoundOn || !audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.7);
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.7);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.7);
+        }
 
         // --- 게임 주요 설정 ---
         const OLIVE_GREEN = '#79B82D';
@@ -453,28 +467,36 @@
             }
         }
         function checkCollision() {
-            if (player.y < 0) { isGameOver = true; }
+            if (isGameOver) return; // 게임 오버 시 중복 실행 방지
+            let collisionDetected = false;
+            if (player.y < 0 || player.y + player.height > 400) { // 위아래 경계 충돌 추가
+                collisionDetected = true;
+            }
             for (const o of obstacles) {
                 if (player.x < o.x + o.width && player.x + player.width > o.x &&
                     player.y < o.y + o.height && player.y + player.height > o.y) {
-                    isGameOver = true;
+                    collisionDetected = true;
+                    break;
                 }
+            }
+
+            if(collisionDetected) {
+                isGameOver = true;
+                playGameOverSound();
             }
         }
         function updateScore() {
-            const targetSpeed = initialSpeed * 1.7;
+            const targetSpeedAt50 = initialSpeed * 1.7;
             const targetScore = 50;
-            const speedIncreasePerPoint = (targetSpeed - initialSpeed) / targetScore;
+            const speedIncreasePerPoint = (targetSpeedAt50 - initialSpeed) / targetScore;
 
             obstacles.forEach(o => {
                 if (!o.passed && player.x > o.x + o.width) {
                     score++; 
                     o.passed = true;
                     
-                    // 점수가 50에 도달할 때까지 점수에 비례하여 속도 증가
-                    if (score <= targetScore) {
-                        gameSpeed = initialSpeed + (score * speedIncreasePerPoint);
-                    }
+                    // 점수에 비례하여 속도가 지속적으로 증가하도록 수정
+                    gameSpeed = initialSpeed + (score * speedIncreasePerPoint);
                 }
             });
         }
@@ -484,7 +506,11 @@
         }
         function gameLoop() {
             if (gameState !== 'PLAYING') return;
-            if (isGameOver) { gameState = 'GAMEOVER'; handleGameOver(); return; }
+            if (isGameOver) { 
+                gameState = 'GAMEOVER'; 
+                handleGameOver(); 
+                return; 
+            }
             requestAnimationFrame(gameLoop);
             ctx.clearRect(0, 0, 800, 400);
             player.update();
