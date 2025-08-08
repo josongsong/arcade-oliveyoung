@@ -1,1 +1,318 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OliveYoung Arcade Game - 8Bit Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        body { display: flex; justify-content: center; align-items: center; flex-direction: column; height: 100vh; margin: 0; background-color: #000; color: #fff; font-family: 'Press Start 2P', cursive; text-align: center; image-rendering: pixelated; }
+        .game-wrapper { position: relative; width: 90%; max-width: 800px; }
+        h1 { font-size: 24px; margin-bottom: 16px; }
+        canvas { background-color: #fff; border-radius: 0; box-shadow: 0 4px 14px 0 rgba(255, 255, 255, 0.1); width: 100%; height: auto; cursor: pointer; }
+        p { color: #888; margin-top: 20px; font-size: 12px; }
+        #sound-toggle { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; user-select: none; z-index: 10; }
+        #name-form { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #000; padding: 20px; border: 4px solid #fff; display: none; z-index: 20; }
+        #name-form input, #name-form button { font-family: 'Press Start 2P', cursive; font-size: 14px; padding: 10px; margin: 5px; text-align: center; border: 2px solid #fff; background-color: #000; color: #fff; }
+        #name-form input { width: 150px; }
+        #name-form button { cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="game-wrapper">
+        <h1>OliveYoung Arcade</h1>
+        <div id="sound-toggle">🔊</div>
+        <canvas id="gameCanvas"></canvas>
+        <div id="name-form">
+            <h2>NEW HIGH SCORE!</h2>
+            <input type="text" id="name-input" placeholder="ENTER NAME" maxlength="8">
+            <button id="submit-score">SAVE</button>
+        </div>
+        <p>Click or Spacebar to Jump</p>
+    </div>
 
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const scale = window.devicePixelRatio || 1;
+        canvas.width = 800 * scale;
+        canvas.height = 400 * scale;
+        ctx.scale(scale, scale);
+        ctx.imageSmoothingEnabled = false;
+
+        // --- 사운드 설정 ---
+        let audioCtx;
+        let isSoundOn = true;
+        function initAudio() { if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } }
+        function playJumpSound() {
+            if (!isSoundOn || !audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.4);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.4);
+        }
+
+        // --- 게임 주요 설정 ---
+        const OLIVE_GREEN = '#79B82D';
+        let score = 0;
+        let gameSpeed = 5; // 초기 속도 증가
+        let isGameOver = false;
+        let gameState = 'START';
+        const gravity = 0.5;
+        const jumpPower = -9;
+
+        // --- 랭킹 서버 설정 (JSONBin.io) ---
+        // JSONBin.io에서 발급받은 키와 Bin ID를 여기에 입력하세요.
+        const JSONBIN_API_KEY = "$2a$10$AvUCI3Xmmj1hi3F64HcG8O69aYFWTj2CpOH4ut.nL3kGnGfb6eN6i"; // Master Key
+        const JSONBIN_BIN_ID = "68954baf203a8b52b5e14925"; // Bin ID
+
+        const nameForm = document.getElementById('name-form');
+        const nameInput = document.getElementById('name-input');
+        const submitButton = document.getElementById('submit-score');
+        const MAX_RANKINGS = 5;
+        let topRankings = [];
+
+        async function getRankings() {
+            try {
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                });
+                if (!response.ok) throw new Error('Failed to fetch rankings');
+                const data = await response.json();
+                return data.record.rankings || [];
+            } catch (error) {
+                console.error(error);
+                return []; // 에러 발생 시 빈 배열 반환
+            }
+        }
+
+        async function saveRanking(name, score) {
+            const currentRankings = await getRankings();
+            currentRankings.push({ name, score });
+            currentRankings.sort((a, b) => b.score - a.score);
+            const newRankings = currentRankings.slice(0, MAX_RANKINGS);
+
+            try {
+                await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_API_KEY
+                    },
+                    body: JSON.stringify({ rankings: newRankings })
+                });
+            } catch (error) {
+                console.error('Failed to save ranking:', error);
+            }
+        }
+
+        function isHighScore(score) {
+            if (score === 0) return false;
+            return topRankings.length < MAX_RANKINGS || score > topRankings[topRankings.length - 1].score;
+        }
+
+        // --- 플레이어 ---
+        const player = {
+            x: 100, y: 200, width: 20, height: 20, velocityY: 0, isJumping: false,
+            draw: function() { ctx.fillStyle = OLIVE_GREEN; ctx.fillRect(this.x, this.y, this.width, this.height); },
+            update: function() {
+                this.velocityY += gravity; this.y += this.velocityY;
+                if (this.y + this.height > 400) { this.y = 400 - this.height; this.velocityY = 0; this.isJumping = false; }
+            },
+            jump: function() {
+                if (!this.isJumping || this.velocityY > -2) { this.velocityY = jumpPower; this.isJumping = true; playJumpSound(); }
+            }
+        };
+
+        // --- 장애물 ---
+        const obstacles = [];
+        const obstacleWidth = 40; const obstacleGap = 160; let frameCount = 0;
+        function spawnObstacle() {
+            // 장애물 생성 주기 단축
+            if (frameCount % 90 === 0) {
+                const minHeight = 50; const maxHeight = 400 - obstacleGap - minHeight;
+                const height = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+                obstacles.push({ x: 800, y: 0, width: obstacleWidth, height: height, passed: false });
+                obstacles.push({ x: 800, y: height + obstacleGap, width: obstacleWidth, height: 400 - height - obstacleGap, passed: true });
+            }
+        }
+        function updateAndDrawObstacles() {
+            ctx.fillStyle = OLIVE_GREEN;
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let o = obstacles[i]; o.x -= gameSpeed;
+                ctx.fillRect(o.x, o.y, o.width, o.height);
+                if (o.x + o.width < 0) { obstacles.splice(i, 1); }
+            }
+        }
+        
+        // --- 충돌 감지 ---
+        function checkCollision() {
+            if (player.y < 0) { isGameOver = true; }
+            for (const o of obstacles) {
+                if (player.x < o.x + o.width && player.x + player.width > o.x &&
+                    player.y < o.y + o.height && player.y + player.height > o.y) {
+                    isGameOver = true;
+                }
+            }
+        }
+        
+        // --- 점수 ---
+        function updateScore() {
+            obstacles.forEach(o => {
+                if (!o.passed && player.x > o.x + o.width) {
+                    score++; o.passed = true;
+                    // 3점마다 속도 증가
+                    if (score > 0 && score % 3 === 0) { gameSpeed += 0.4; }
+                }
+            });
+        }
+        function drawScore() {
+            ctx.fillStyle = '#888'; ctx.font = '16px "Press Start 2P"';
+            ctx.textAlign = 'left'; ctx.fillText(`SCORE: ${score}`, 20, 35);
+        }
+
+        // --- 게임 루프 ---
+        function gameLoop() {
+            if (gameState !== 'PLAYING') return;
+            if (isGameOver) {
+                gameState = 'GAMEOVER';
+                handleGameOver();
+                return;
+            }
+            requestAnimationFrame(gameLoop);
+            ctx.clearRect(0, 0, 800, 400);
+            player.update();
+            player.draw();
+            spawnObstacle();
+            updateAndDrawObstacles();
+            checkCollision();
+            updateScore();
+            drawScore();
+            frameCount++;
+        }
+
+        // --- 게임 상태 화면 ---
+        function drawMessage(mainText, subText, subText2) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+            ctx.fillRect(0, 0, 800, 400);
+            ctx.fillStyle = '#000';
+            ctx.font = '24px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText(mainText, 400, 150);
+            if (subText) {
+                ctx.font = '14px "Press Start 2P"';
+                ctx.fillText(subText, 400, 210);
+            }
+            if (subText2) {
+                ctx.font = '14px "Press Start 2P"';
+                ctx.fillText(subText2, 400, 250);
+            }
+        }
+
+        async function handleGameOver() {
+            topRankings = await getRankings();
+            if (isHighScore(score)) {
+                nameForm.style.display = 'block';
+            } else {
+                drawRankingScreen();
+            }
+        }
+
+        async function drawStartScreen() {
+            gameState = 'START';
+            ctx.clearRect(0, 0, 800, 400);
+            drawMessage('LOADING...');
+            topRankings = await getRankings();
+            const highScore = topRankings.length > 0 ? topRankings[0].score : 0;
+            drawMessage('CLICK TO START', `HIGH SCORE: ${highScore}`, `(R to view Ranking)`);
+        }
+        
+        function drawRankingScreen() {
+            gameState = 'RANKING';
+            nameForm.style.display = 'none';
+            ctx.clearRect(0, 0, 800, 400);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            ctx.fillRect(0, 0, 800, 400);
+            ctx.fillStyle = '#FFF';
+            ctx.font = '24px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText('RANKING', 400, 80);
+            ctx.font = '16px "Press Start 2P"';
+
+            if (topRankings.length === 0) {
+                 ctx.fillText('NO DATA', 400, 200);
+            } else {
+                topRankings.forEach((entry, index) => {
+                    const yPos = 150 + index * 40;
+                    ctx.textAlign = 'left';
+                    ctx.fillText(`${index + 1}. ${entry.name}`, 250, yPos);
+                    ctx.textAlign = 'right';
+                    ctx.fillText(entry.score, 550, yPos);
+                });
+            }
+            ctx.font = '14px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText('CLICK TO RESTART', 400, 350);
+        }
+
+        // --- 초기화 및 이벤트 리스너 ---
+        function resetGame() {
+            player.y = 200; player.velocityY = 0;
+            obstacles.length = 0; score = 0;
+            gameSpeed = 5; frameCount = 0;
+            isGameOver = false;
+            gameState = 'PLAYING';
+            nameForm.style.display = 'none';
+            gameLoop();
+        }
+
+        function handleInput(e) {
+            e.preventDefault();
+            initAudio();
+            if (gameState === 'START' || gameState === 'RANKING') {
+                resetGame();
+            } else if (gameState === 'PLAYING') {
+                player.jump();
+            }
+        }
+        
+        const soundToggleButton = document.getElementById('sound-toggle');
+        soundToggleButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isSoundOn = !isSoundOn;
+            soundToggleButton.textContent = isSoundOn ? '🔊' : '🔇';
+            initAudio();
+        });
+        
+        submitButton.addEventListener('click', async () => {
+            const name = nameInput.value.trim().toUpperCase();
+            if (name) {
+                nameForm.style.display = 'none';
+                drawMessage('SAVING...');
+                await saveRanking(name, score);
+                topRankings = await getRankings();
+                drawRankingScreen();
+            }
+        });
+        
+        canvas.addEventListener('click', handleInput);
+        window.addEventListener('keydown', async (e) => {
+            if (e.code === 'Space') handleInput(e);
+            if (e.key.toLowerCase() === 'r' && (gameState === 'START' || gameState === 'RANKING')) {
+                drawMessage('LOADING...');
+                topRankings = await getRankings();
+                drawRankingScreen();
+            }
+        });
+
+        drawStartScreen();
+    </script>
+</body>
+</html>
