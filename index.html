@@ -3,32 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OliveYoung Arcade Game - 8Bit Edition</title>
+    <title>Oliveyoung 준법경영 아케이드</title>
     <style>
+        /* 8비트 픽셀 폰트 임포트 */
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        body { display: flex; justify-content: center; align-items: center; flex-direction: column; height: 100vh; margin: 0; background-color: #000; color: #fff; font-family: 'Press Start 2P', cursive; text-align: center; image-rendering: pixelated; }
-        .game-wrapper { position: relative; width: 90%; max-width: 800px; }
-        h1 { font-size: 24px; margin-bottom: 16px; }
-        canvas { background-color: #fff; border-radius: 0; box-shadow: 0 4px 14px 0 rgba(255, 255, 255, 0.1); width: 100%; height: auto; cursor: pointer; }
-        p { color: #888; margin-top: 20px; font-size: 12px; }
-        #sound-toggle { position: absolute; top: 10px; right: 10px; font-size: 24px; cursor: pointer; user-select: none; z-index: 10; }
-        #name-form { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #000; padding: 20px; border: 4px solid #fff; display: none; z-index: 20; }
-        #name-form input, #name-form button { font-family: 'Press Start 2P', cursive; font-size: 14px; padding: 10px; margin: 5px; text-align: center; border: 2px solid #fff; background-color: #000; color: #fff; }
-        #name-form input { width: 150px; }
-        #name-form button { cursor: pointer; }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Press Start 2P', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            text-align: center;
+            image-rendering: pixelated;
+        }
+        /* 시작 페이지 스타일 */
+        #landing-page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1620912189872-63b4f85b6513?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            z-index: 100;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #landing-page h2 {
+            font-size: 28px;
+            color: #fff;
+            text-shadow: 3px 3px 0px #000;
+            margin: 0;
+        }
+        #landing-page p {
+            font-size: 16px;
+            color: #fff;
+            text-shadow: 2px 2px 0px #000;
+            margin-top: 20px;
+            max-width: 600px;
+        }
+        #start-game-btn {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 20px;
+            padding: 15px 30px;
+            margin-top: 40px;
+            cursor: pointer;
+            color: #fff;
+            background-color: #79B82D;
+            border: 4px solid #fff;
+            box-shadow: 5px 5px 0px #000;
+            transition: all 0.1s ease-in-out;
+        }
+        #start-game-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 3px 3px 0px #000;
+        }
+
+        .game-wrapper {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            display: none; /* 처음에는 숨김 */
+        }
+        h1 {
+            font-size: 22px;
+            margin-bottom: 16px;
+        }
+        canvas {
+            background-color: #ffffff;
+            border-radius: 0;
+            box-shadow: 0 4px 14px 0 rgba(255, 255, 255, 0.1);
+            width: 100%;
+            height: auto;
+            cursor: pointer;
+        }
+        .dev-info {
+            color: #555555;
+            margin-top: 16px;
+            font-size: 10px;
+        }
+        #sound-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            user-select: none;
+            z-index: 10;
+        }
+        #name-form {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #000;
+            padding: 20px;
+            border: 4px solid #fff;
+            display: none;
+            z-index: 20;
+        }
+        #name-form input, #name-form button {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            padding: 10px;
+            margin: 5px;
+            text-align: center;
+            border: 2px solid #fff;
+            background-color: #000;
+            color: #fff;
+        }
+        #name-form input {
+            width: 150px;
+        }
+        #name-form button {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
+    <!-- 시작 페이지 -->
+    <div id="landing-page">
+        <h2>야호~~~ 글로벌진출 너무 신난다~~</h2>
+        <p>올영준법경영과 함께 세계정복하러 달려볼까?!</p>
+        <button id="start-game-btn">GAME START</button>
+    </div>
+
     <div class="game-wrapper">
-        <h1>OliveYoung Arcade</h1>
+        <h1>Oliveyoung 준법경영 아케이드</h1>
         <div id="sound-toggle">🔊</div>
         <canvas id="gameCanvas"></canvas>
         <div id="name-form">
             <h2>NEW HIGH SCORE!</h2>
-            <input type="text" id="name-input" placeholder="ENTER NAME" maxlength="8">
+            <input type="text" id="name-input" placeholder="ENTER NAME" maxlength="10">
             <button id="submit-score">SAVE</button>
         </div>
-        <p>Click or Spacebar to Jump</p>
+        <p class="dev-info">Developed by 944899, @Global IT Dev Center</p>
     </div>
 
     <script>
@@ -58,101 +177,256 @@
             oscillator.start();
             oscillator.stop(audioCtx.currentTime + 0.4);
         }
+        function playItemSound(isSpecial = false) {
+            if (!isSoundOn || !audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = isSpecial ? 'sine' : 'triangle';
+            oscillator.frequency.setValueAtTime(isSpecial ? 1500 : 1320, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(0.07, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
 
         // --- 게임 주요 설정 ---
         const OLIVE_GREEN = '#79B82D';
         let score = 0;
-        let gameSpeed = 5; // 초기 속도 증가
+        let gameSpeed = 4;
         let isGameOver = false;
-        let gameState = 'START';
         const gravity = 0.5;
-        const jumpPower = -9;
+        const jumpPower = -7.2; // 점프 탄성 80%로 조정 (난이도 하향)
+        let gameState = 'LANDING'; // LANDING, START, PLAYING, GAMEOVER, RANKING
 
-        // --- 랭킹 서버 설정 (JSONBin.io) ---
-        // JSONBin.io에서 발급받은 키와 Bin ID를 여기에 입력하세요.
-        const JSONBIN_API_KEY = "$2a$10$AvUCI3Xmmj1hi3F64HcG8O69aYFWTj2CpOH4ut.nL3kGnGfb6eN6i"; // Master Key
-        const JSONBIN_BIN_ID = "68954baf203a8b52b5e14925"; // Bin ID
-
+        // --- 글로벌 랭킹 (JSONBin.io) 설정 ---
+        const API_KEY = '$2a$10$AvUCI3Xmmj1hi3F64HcG8O69aYFWTj2CpOH4ut.nL3kGnGfb6eN6i';
+        const BIN_ID = '68954baf203a8b52b5e14925';
+        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+        
         const nameForm = document.getElementById('name-form');
         const nameInput = document.getElementById('name-input');
         const submitButton = document.getElementById('submit-score');
+        const LAST_USED_NAME_KEY = 'olive-arcade-last-name';
         const MAX_RANKINGS = 5;
-        let topRankings = [];
+        const ADJECTIVES = ["SWIFT", "COSMIC", "MAGIC", "SILENT", "BRAVE", "HAPPY", "SUPER"];
+        const NOUNS = ["PANDA", "NINJA", "RIDER", "FOX", "STAR", "HERO", "CAT"];
+
+        function generateRandomName() {
+            const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+            const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+            const num = Math.floor(Math.random() * 90) + 10;
+            return `${adj}${noun}${num}`;
+        }
 
         async function getRankings() {
             try {
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`, {
-                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                const response = await fetch(`${JSONBIN_URL}/latest`, {
+                    headers: { 'X-Master-Key': API_KEY }
                 });
                 if (!response.ok) throw new Error('Failed to fetch rankings');
                 const data = await response.json();
-                return data.record.rankings || [];
-            } catch (error) {
-                console.error(error);
-                return []; // 에러 발생 시 빈 배열 반환
+                return Array.isArray(data.record) ? data.record : [];
+            } catch (e) {
+                console.error("Error getting rankings:", e);
+                return [];
             }
         }
 
-        async function saveRanking(name, score) {
-            const currentRankings = await getRankings();
-            currentRankings.push({ name, score });
-            currentRankings.sort((a, b) => b.score - a.score);
-            const newRankings = currentRankings.slice(0, MAX_RANKINGS);
-
+        async function saveRanking(name, score, completed) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'SAVING...';
             try {
-                await fetch(`https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`, {
+                let rankings = await getRankings();
+                rankings.push({ name, score, completed });
+                rankings.sort((a, b) => b.score - a.score);
+                const newRankings = rankings.slice(0, MAX_RANKINGS);
+
+                await fetch(JSONBIN_URL, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Master-Key': JSONBIN_API_KEY
+                        'X-Master-Key': API_KEY
                     },
-                    body: JSON.stringify({ rankings: newRankings })
+                    body: JSON.stringify(newRankings)
                 });
-            } catch (error) {
-                console.error('Failed to save ranking:', error);
+                localStorage.setItem(LAST_USED_NAME_KEY, name);
+            } catch (e) {
+                console.error("Error saving ranking:", e);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'SAVE';
             }
         }
 
-        function isHighScore(score) {
+        async function isHighScore(score) {
             if (score === 0) return false;
-            return topRankings.length < MAX_RANKINGS || score > topRankings[topRankings.length - 1].score;
+            const rankings = await getRankings();
+            return rankings.length < MAX_RANKINGS || score > rankings[rankings.length - 1].score;
         }
 
         // --- 플레이어 ---
         const player = {
-            x: 100, y: 200, width: 20, height: 20, velocityY: 0, isJumping: false,
-            draw: function() { ctx.fillStyle = OLIVE_GREEN; ctx.fillRect(this.x, this.y, this.width, this.height); },
+            x: 100, y: 200, width: 24, height: 24, velocityY: 0, isJumping: false,
+            draw: function() {
+                ctx.font = '24px "Press Start 2P"';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                ctx.fillText('🫒', this.x, this.y);
+            },
             update: function() {
                 this.velocityY += gravity; this.y += this.velocityY;
                 if (this.y + this.height > 400) { this.y = 400 - this.height; this.velocityY = 0; this.isJumping = false; }
             },
             jump: function() {
-                if (!this.isJumping || this.velocityY > -2) { this.velocityY = jumpPower; this.isJumping = true; playJumpSound(); }
+                if (gameState === 'PLAYING' && (!this.isJumping || this.velocityY > -2)) { this.velocityY = jumpPower; this.isJumping = true; playJumpSound(); }
             }
         };
 
-        // --- 장애물 ---
+        // --- 장애물 및 아이템 시스템 ---
         const obstacles = [];
-        const obstacleWidth = 40; const obstacleGap = 160; let frameCount = 0;
-        function spawnObstacle() {
-            // 장애물 생성 주기 단축
-            if (frameCount % 90 === 0) {
-                const minHeight = 50; const maxHeight = 400 - obstacleGap - minHeight;
-                const height = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
-                obstacles.push({ x: 800, y: 0, width: obstacleWidth, height: height, passed: false });
-                obstacles.push({ x: 800, y: height + obstacleGap, width: obstacleWidth, height: 400 - height - obstacleGap, passed: true });
+        const items = [];
+        const particles = [];
+        const obstacleWidth = 40;
+        const obstacleGap = 160;
+        const ITEM_SIZE = 24;
+        let frameCount = 0;
+        
+        const SPECIAL_ITEMS = ['올', '영', '준', '법', '경', '영'];
+        const SPECIAL_ITEM_COLORS = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#9B59B6', '#F39C12'];
+        let collectedSpecialItemIndices = []; // '영' 중복 처리를 위해 인덱스로 관리
+        let completedSpecialQuest = false;
+
+        function spawnEntities() {
+            if (frameCount % 100 === 0 && frameCount > 0) {
+                const minHeight = 50;
+                const maxHeight = 400 - obstacleGap - minHeight;
+                const topObstacleHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+
+                obstacles.push({ x: 800, y: 0, width: obstacleWidth, height: topObstacleHeight, passed: false });
+                obstacles.push({ x: 800, y: topObstacleHeight + obstacleGap, width: obstacleWidth, height: 400 - topObstacleHeight - obstacleGap, passed: true });
+
+                const itemY = topObstacleHeight + (obstacleGap / 2) - (ITEM_SIZE / 2);
+                const nextSpecialIndex = collectedSpecialItemIndices.length;
+                let specialItemSpawned = false;
+
+                if (nextSpecialIndex < SPECIAL_ITEMS.length) {
+                    const isEarlyItem = nextSpecialIndex < 2;
+                    const spawnChance = isEarlyItem ? 0.7 : 0.4;
+                    const frameRequirement = isEarlyItem ? 100 : 500 + (nextSpecialIndex * 150);
+
+                    if (frameCount > frameRequirement && Math.random() < spawnChance) {
+                        const letter = SPECIAL_ITEMS[nextSpecialIndex];
+                        const color = SPECIAL_ITEM_COLORS[nextSpecialIndex];
+                        items.push({ x: 800 + (obstacleWidth / 2), y: itemY, type: 'special', letter: letter, color: color, index: nextSpecialIndex });
+                        specialItemSpawned = true;
+                    }
+                }
+
+                if (!specialItemSpawned && Math.random() < 0.25) {
+                    items.push({ x: 800 + (obstacleWidth / 2), y: itemY, type: 'normal' });
+                }
             }
         }
+
+        function updateAndDrawItems() {
+            for (let i = items.length - 1; i >= 0; i--) {
+                const item = items[i];
+                item.x -= gameSpeed;
+
+                if(item.type === 'special') {
+                    ctx.fillStyle = item.color;
+                    ctx.fillRect(item.x, item.y, ITEM_SIZE, ITEM_SIZE);
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.font = '14px "Press Start 2P"';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(item.letter, item.x + ITEM_SIZE / 2, item.y + ITEM_SIZE / 2 + 2);
+                } else {
+                    // 점수용 아이템을 노란색 코인으로 그리기
+                    ctx.fillStyle = '#FFD700'; // Gold
+                    ctx.beginPath();
+                    ctx.arc(item.x + ITEM_SIZE / 2, item.y + ITEM_SIZE / 2, ITEM_SIZE / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#DAA520'; // Goldenrod
+                    ctx.beginPath();
+                    ctx.arc(item.x + ITEM_SIZE / 2, item.y + ITEM_SIZE / 2, ITEM_SIZE / 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                if (item.x + ITEM_SIZE < 0) items.splice(i, 1);
+            }
+        }
+
+        function checkItemCollision() {
+            for (let i = items.length - 1; i >= 0; i--) {
+                const item = items[i];
+                if (player.x < item.x + ITEM_SIZE && player.x + player.width > item.x &&
+                    player.y < item.y + ITEM_SIZE && player.y + player.height > item.y) {
+                    
+                    if (item.type === 'special' && !collectedSpecialItemIndices.includes(item.index)) {
+                        playItemSound(true);
+                        collectedSpecialItemIndices.push(item.index);
+                        if (collectedSpecialItemIndices.length === SPECIAL_ITEMS.length) {
+                            completedSpecialQuest = true;
+                            score += 50;
+                            triggerFireworks(item.x, item.y);
+                        }
+                    } else if (item.type === 'normal') {
+                        playItemSound(false);
+                        score += 5;
+                    }
+                    items.splice(i, 1);
+                }
+            }
+        }
+
+        function drawCollectedSpecialItems() {
+            ctx.font = '20px "Press Start 2P"';
+            ctx.textAlign = 'left';
+            let startX = 250;
+            for(let i = 0; i < SPECIAL_ITEMS.length; i++) {
+                // 획득한 아이템은 해당 아이템 색상으로, 아니면 회색으로 표시
+                if (collectedSpecialItemIndices.includes(i)) {
+                    ctx.fillStyle = SPECIAL_ITEM_COLORS[i];
+                } else {
+                    ctx.fillStyle = '#CCCCCC';
+                }
+                ctx.fillText(SPECIAL_ITEMS[i], startX + i * 40, 35);
+            }
+        }
+
+        // --- 폭죽 효과 ---
+        function triggerFireworks(x, y) {
+            for (let i = 0; i < 100; i++) {
+                particles.push(new Particle(x, y));
+            }
+        }
+
+        class Particle {
+            constructor(x, y) { this.x = x; this.y = y; this.size = Math.random() * 5 + 1; this.speedX = Math.random() * 6 - 3; this.speedY = Math.random() * 6 - 3; this.color = `hsl(${Math.random() * 360}, 100%, 50%)`; this.life = 100; }
+            update() { this.x += this.speedX; this.y += this.speedY; this.life -= 1; }
+            draw() { ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
+        }
+
+        function handleParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].life < 0) particles.splice(i, 1);
+            }
+        }
+
+        // --- 충돌, 점수, 루프 등 ---
         function updateAndDrawObstacles() {
-            ctx.fillStyle = OLIVE_GREEN;
+            ctx.fillStyle = '#000000';
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 let o = obstacles[i]; o.x -= gameSpeed;
                 ctx.fillRect(o.x, o.y, o.width, o.height);
-                if (o.x + o.width < 0) { obstacles.splice(i, 1); }
+                if (o.x + o.width < 0) obstacles.splice(i, 1);
             }
         }
-        
-        // --- 충돌 감지 ---
         function checkCollision() {
             if (player.y < 0) { isGameOver = true; }
             for (const o of obstacles) {
@@ -162,39 +436,34 @@
                 }
             }
         }
-        
-        // --- 점수 ---
         function updateScore() {
             obstacles.forEach(o => {
                 if (!o.passed && player.x > o.x + o.width) {
                     score++; o.passed = true;
-                    // 3점마다 속도 증가
-                    if (score > 0 && score % 3 === 0) { gameSpeed += 0.4; }
+                    if (score > 0 && score % 4 === 0) { gameSpeed += 0.3; }
                 }
             });
         }
         function drawScore() {
-            ctx.fillStyle = '#888'; ctx.font = '16px "Press Start 2P"';
+            ctx.fillStyle = '#888888'; ctx.font = '16px "Press Start 2P"';
             ctx.textAlign = 'left'; ctx.fillText(`SCORE: ${score}`, 20, 35);
         }
-
-        // --- 게임 루프 ---
         function gameLoop() {
             if (gameState !== 'PLAYING') return;
-            if (isGameOver) {
-                gameState = 'GAMEOVER';
-                handleGameOver();
-                return;
-            }
+            if (isGameOver) { gameState = 'GAMEOVER'; handleGameOver(); return; }
             requestAnimationFrame(gameLoop);
             ctx.clearRect(0, 0, 800, 400);
             player.update();
             player.draw();
-            spawnObstacle();
+            spawnEntities();
             updateAndDrawObstacles();
+            updateAndDrawItems();
+            handleParticles();
             checkCollision();
+            checkItemCollision();
             updateScore();
             drawScore();
+            drawCollectedSpecialItems();
             frameCount++;
         }
 
@@ -202,7 +471,7 @@
         function drawMessage(mainText, subText, subText2) {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
             ctx.fillRect(0, 0, 800, 400);
-            ctx.fillStyle = '#000';
+            ctx.fillStyle = '#000000';
             ctx.font = '24px "Press Start 2P"';
             ctx.textAlign = 'center';
             ctx.fillText(mainText, 400, 150);
@@ -210,49 +479,60 @@
                 ctx.font = '14px "Press Start 2P"';
                 ctx.fillText(subText, 400, 210);
             }
-            if (subText2) {
+             if (subText2) {
                 ctx.font = '14px "Press Start 2P"';
                 ctx.fillText(subText2, 400, 250);
             }
         }
 
         async function handleGameOver() {
-            topRankings = await getRankings();
-            if (isHighScore(score)) {
+            if (await isHighScore(score)) {
+                const lastUsedName = localStorage.getItem(LAST_USED_NAME_KEY);
+                nameInput.value = lastUsedName || generateRandomName();
                 nameForm.style.display = 'block';
+                nameInput.focus();
             } else {
-                drawRankingScreen();
+                await drawRankingScreen();
             }
         }
 
         async function drawStartScreen() {
             gameState = 'START';
             ctx.clearRect(0, 0, 800, 400);
-            drawMessage('LOADING...');
-            topRankings = await getRankings();
-            const highScore = topRankings.length > 0 ? topRankings[0].score : 0;
-            drawMessage('CLICK TO START', `HIGH SCORE: ${highScore}`, `(R to view Ranking)`);
+            drawMessage('LOADING HIGH SCORE...');
+            const rankings = await getRankings();
+            const highScore = rankings.length > 0 ? rankings[0].score : 0;
+            drawMessage('CLICK TO START', `GLOBAL HIGH SCORE: ${highScore}`, `(R to view Ranking)`);
         }
         
-        function drawRankingScreen() {
+        async function drawRankingScreen() {
             gameState = 'RANKING';
             nameForm.style.display = 'none';
             ctx.clearRect(0, 0, 800, 400);
             ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
             ctx.fillRect(0, 0, 800, 400);
-            ctx.fillStyle = '#FFF';
+            ctx.fillStyle = '#FFFFFF';
             ctx.font = '24px "Press Start 2P"';
             ctx.textAlign = 'center';
-            ctx.fillText('RANKING', 400, 80);
-            ctx.font = '16px "Press Start 2P"';
+            ctx.fillText('GLOBAL RANKING', 400, 80);
+            ctx.font = '14px "Press Start 2P"';
+            ctx.fillText('LOADING...', 400, 200);
 
-            if (topRankings.length === 0) {
+            const rankings = await getRankings();
+            
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            ctx.fillRect(0, 100, 800, 280);
+            ctx.fillStyle = '#FFFFFF';
+
+            if (rankings.length === 0) {
                  ctx.fillText('NO DATA', 400, 200);
             } else {
-                topRankings.forEach((entry, index) => {
+                ctx.font = '16px "Press Start 2P"';
+                rankings.forEach((entry, index) => {
                     const yPos = 150 + index * 40;
+                    const displayName = entry.completed ? `${entry.name} ★` : entry.name;
                     ctx.textAlign = 'left';
-                    ctx.fillText(`${index + 1}. ${entry.name}`, 250, yPos);
+                    ctx.fillText(`${index + 1}. ${displayName}`, 250, yPos);
                     ctx.textAlign = 'right';
                     ctx.fillText(entry.score, 550, yPos);
                 });
@@ -265,20 +545,25 @@
         // --- 초기화 및 이벤트 리스너 ---
         function resetGame() {
             player.y = 200; player.velocityY = 0;
-            obstacles.length = 0; score = 0;
-            gameSpeed = 5; frameCount = 0;
+            obstacles.length = 0;
+            items.length = 0;
+            particles.length = 0;
+            collectedSpecialItemIndices = [];
+            completedSpecialQuest = false;
+            score = 0;
+            gameSpeed = 4; frameCount = 0;
             isGameOver = false;
             gameState = 'PLAYING';
             nameForm.style.display = 'none';
             gameLoop();
         }
 
-        function handleInput(e) {
+        async function handleInput(e) {
             e.preventDefault();
             initAudio();
             if (gameState === 'START' || gameState === 'RANKING') {
                 resetGame();
-            } else if (gameState === 'PLAYING') {
+            } else {
                 player.jump();
             }
         }
@@ -294,25 +579,33 @@
         submitButton.addEventListener('click', async () => {
             const name = nameInput.value.trim().toUpperCase();
             if (name) {
-                nameForm.style.display = 'none';
-                drawMessage('SAVING...');
-                await saveRanking(name, score);
-                topRankings = await getRankings();
-                drawRankingScreen();
+                await saveRanking(name, score, completedSpecialQuest);
+                await drawRankingScreen();
             }
         });
         
         canvas.addEventListener('click', handleInput);
         window.addEventListener('keydown', async (e) => {
-            if (e.code === 'Space') handleInput(e);
+            if (e.code === 'Space') await handleInput(e);
             if (e.key.toLowerCase() === 'r' && (gameState === 'START' || gameState === 'RANKING')) {
-                drawMessage('LOADING...');
-                topRankings = await getRankings();
-                drawRankingScreen();
+                await drawRankingScreen();
+            }
+            if (e.key === 'Enter' && nameForm.style.display === 'block') {
+                submitButton.click();
             }
         });
 
-        drawStartScreen();
+        // 시작 페이지 로직
+        const landingPage = document.getElementById('landing-page');
+        const gameWrapper = document.querySelector('.game-wrapper');
+        const startGameBtn = document.getElementById('start-game-btn');
+
+        startGameBtn.addEventListener('click', async () => {
+            landingPage.style.display = 'none';
+            gameWrapper.style.display = 'block';
+            await drawStartScreen();
+        });
+
     </script>
 </body>
 </html>
