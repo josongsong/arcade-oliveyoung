@@ -135,12 +135,12 @@
     <div id="landing-page">
         <h2>야호~~~ 글로벌진출 너무 신난다~~</h2>
         <p>올영준법경영과 함께 세계정복하러 달려볼까?!</p>
-        <div>가장 높은 점수를 획득한 올영둥이에겐 엄청난 선물이 기다리고 있다는 소문이 있다던데?!</div>
+        <p>고득점 올영둥이에겐 엄청난 선물이 기다리고 있다는 소문이 있다던데?!</p>
         <button id="start-game-btn">GAME START</button>
     </div>
 
     <div class="game-wrapper">
-        <h1>Oliveyoung 준법경영 아케이드</h1>
+        <h1>Oliveyoung 준법경영 세계정복 아케이드</h1>
         <div id="sound-toggle">🔊</div>
         <canvas id="gameCanvas"></canvas>
         <div id="name-form">
@@ -293,10 +293,11 @@
         const obstacleGap = 160;
         const ITEM_SIZE = 24;
         let frameCount = 0;
+        let lastSpecialItemSpawnFrame = -999; // 마지막 특별 아이템 생성 프레임
         
-        const SPECIAL_ITEMS = ['올', '영', '준', '법', '경', '영'];
-        const SPECIAL_ITEM_COLORS = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#9B59B6', '#F39C12'];
-        let collectedSpecialItemIndices = []; // '영' 중복 처리를 위해 인덱스로 관리
+        const SPECIAL_ITEMS = ['올', '영', '준', '법', '경', '영', '세', '계', '정', '복'];
+        const SPECIAL_ITEM_COLORS = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#9B59B6', '#F39C12', '#1ABC9C', '#E67E22', '#3498DB', '#E91E63'];
+        let collectedSpecialItemIndices = [];
         let completedSpecialQuest = false;
 
         function spawnEntities() {
@@ -311,17 +312,20 @@
                 const itemY = topObstacleHeight + (obstacleGap / 2) - (ITEM_SIZE / 2);
                 const nextSpecialIndex = collectedSpecialItemIndices.length;
                 let specialItemSpawned = false;
+                
+                const SPECIAL_ITEM_COOLDOWN_FRAMES = 200; // 최소 200프레임(장애물 2개) 간격
 
                 if (nextSpecialIndex < SPECIAL_ITEMS.length) {
                     const isEarlyItem = nextSpecialIndex < 2;
                     const spawnChance = isEarlyItem ? 0.7 : 0.4;
                     const frameRequirement = isEarlyItem ? 100 : 500 + (nextSpecialIndex * 150);
 
-                    if (frameCount > frameRequirement && Math.random() < spawnChance) {
+                    if (frameCount > frameRequirement && (frameCount - lastSpecialItemSpawnFrame) > SPECIAL_ITEM_COOLDOWN_FRAMES && Math.random() < spawnChance) {
                         const letter = SPECIAL_ITEMS[nextSpecialIndex];
                         const color = SPECIAL_ITEM_COLORS[nextSpecialIndex];
                         items.push({ x: 800 + (obstacleWidth / 2), y: itemY, type: 'special', letter: letter, color: color, index: nextSpecialIndex });
                         specialItemSpawned = true;
+                        lastSpecialItemSpawnFrame = frameCount; // 마지막 생성 프레임 기록
                     }
                 }
 
@@ -345,12 +349,11 @@
                     ctx.textBaseline = 'middle';
                     ctx.fillText(item.letter, item.x + ITEM_SIZE / 2, item.y + ITEM_SIZE / 2 + 2);
                 } else {
-                    // 점수용 아이템을 노란색 코인으로 그리기
-                    ctx.fillStyle = '#FFD700'; // Gold
+                    ctx.fillStyle = '#FFD700';
                     ctx.beginPath();
                     ctx.arc(item.x + ITEM_SIZE / 2, item.y + ITEM_SIZE / 2, ITEM_SIZE / 2, 0, Math.PI * 2);
                     ctx.fill();
-                    ctx.fillStyle = '#DAA520'; // Goldenrod
+                    ctx.fillStyle = '#DAA520';
                     ctx.beginPath();
                     ctx.arc(item.x + ITEM_SIZE / 2, item.y + ITEM_SIZE / 2, ITEM_SIZE / 3, 0, Math.PI * 2);
                     ctx.fill();
@@ -369,11 +372,15 @@
                     if (item.type === 'special' && !collectedSpecialItemIndices.includes(item.index)) {
                         playItemSound(true);
                         collectedSpecialItemIndices.push(item.index);
+                        
                         if (collectedSpecialItemIndices.length === SPECIAL_ITEMS.length) {
                             completedSpecialQuest = true;
-                            score += 50;
-                            triggerFireworks(item.x, item.y);
+                            score += 100;
+                            triggerFireworks(item.x, item.y, 150);
+                        } else {
+                            triggerFireworks(item.x, item.y, 50);
                         }
+
                     } else if (item.type === 'normal') {
                         playItemSound(false);
                         score += 5;
@@ -384,31 +391,45 @@
         }
 
         function drawCollectedSpecialItems() {
-            ctx.font = '20px "Press Start 2P"';
+            ctx.font = '16px "Press Start 2P"';
             ctx.textAlign = 'left';
-            let startX = 250;
+            let startX = 200;
             for(let i = 0; i < SPECIAL_ITEMS.length; i++) {
-                // 획득한 아이템은 해당 아이템 색상으로, 아니면 회색으로 표시
                 if (collectedSpecialItemIndices.includes(i)) {
                     ctx.fillStyle = SPECIAL_ITEM_COLORS[i];
                 } else {
                     ctx.fillStyle = '#CCCCCC';
                 }
-                ctx.fillText(SPECIAL_ITEMS[i], startX + i * 40, 35);
+                ctx.fillText(SPECIAL_ITEMS[i], startX + i * 32, 35);
             }
         }
 
         // --- 폭죽 효과 ---
-        function triggerFireworks(x, y) {
-            for (let i = 0; i < 100; i++) {
+        function triggerFireworks(x, y, count = 50) {
+            for (let i = 0; i < count; i++) {
                 particles.push(new Particle(x, y));
             }
         }
 
         class Particle {
-            constructor(x, y) { this.x = x; this.y = y; this.size = Math.random() * 5 + 1; this.speedX = Math.random() * 6 - 3; this.speedY = Math.random() * 6 - 3; this.color = `hsl(${Math.random() * 360}, 100%, 50%)`; this.life = 100; }
-            update() { this.x += this.speedX; this.y += this.speedY; this.life -= 1; }
-            draw() { ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill(); }
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 6 + 2; // 픽셀 크기
+                this.speedX = Math.random() * 8 - 4;
+                this.speedY = Math.random() * 8 - 4;
+                this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                this.life = 100;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life -= 1;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+            }
         }
 
         function handleParticles() {
@@ -552,7 +573,9 @@
             collectedSpecialItemIndices = [];
             completedSpecialQuest = false;
             score = 0;
-            gameSpeed = 4; frameCount = 0;
+            gameSpeed = 4;
+            frameCount = 0;
+            lastSpecialItemSpawnFrame = -999; // 쿨다운 타이머 리셋
             isGameOver = false;
             gameState = 'PLAYING';
             nameForm.style.display = 'none';
