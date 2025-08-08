@@ -210,12 +210,13 @@
         // --- 게임 주요 설정 ---
         const OLIVE_GREEN = '#79B82D';
         let score = 0;
-        const initialSpeed = 4;
+        const initialSpeed = 5; // 초기 속도 하향 조정
         let gameSpeed = initialSpeed;
         let isGameOver = false;
-        const gravity = 0.5;
-        const jumpPower = -7.2; // 점프 탄성 80%로 조정 (난이도 하향)
-        let gameState = 'LANDING'; // LANDING, START, PLAYING, GAMEOVER, RANKING
+        const gravity = 0.5; // 중력 하향 조정
+        const jumpPower = -7.2;
+        let gameState = 'LANDING';
+        let lastTime = 0; // Delta time 추적용
 
         // --- 글로벌 랭킹 (JSONBin.io) 설정 ---
         const API_KEY = '$2a$10$AvUCI3Xmmj1hi3F64HcG8O69aYFWTj2CpOH4ut.nL3kGnGfb6eN6i';
@@ -292,8 +293,9 @@
                 ctx.textBaseline = 'top';
                 ctx.fillText('🫒', this.x, this.y);
             },
-            update: function() {
-                this.velocityY += gravity; this.y += this.velocityY;
+            update: function(delta) {
+                this.velocityY += gravity * delta;
+                this.y += this.velocityY * delta;
                 if (this.y + this.height > 400) { this.y = 400 - this.height; this.velocityY = 0; this.isJumping = false; }
             },
             jump: function() {
@@ -309,7 +311,7 @@
         const obstacleGap = 160;
         const ITEM_SIZE = 24;
         let frameCount = 0;
-        let lastSpecialItemSpawnFrame = -999; // 마지막 특별 아이템 생성 프레임
+        let lastSpecialItemSpawnFrame = -999;
         
         const SPECIAL_ITEMS = ['올', '영', '준', '법', '경', '영', '세', '계', '정', '복'];
         const SPECIAL_ITEM_COLORS = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#9B59B6', '#F39C12', '#1ABC9C', '#E67E22', '#3498DB', '#E91E63'];
@@ -329,7 +331,7 @@
                 const nextSpecialIndex = collectedSpecialItemIndices.length;
                 let specialItemSpawned = false;
                 
-                const SPECIAL_ITEM_COOLDOWN_FRAMES = 200; // 최소 200프레임(장애물 2개) 간격
+                const SPECIAL_ITEM_COOLDOWN_FRAMES = 200;
 
                 if (nextSpecialIndex < SPECIAL_ITEMS.length) {
                     const isEarlyItem = nextSpecialIndex < 2;
@@ -341,7 +343,7 @@
                         const color = SPECIAL_ITEM_COLORS[nextSpecialIndex];
                         items.push({ x: 800 + (obstacleWidth / 2), y: itemY, type: 'special', letter: letter, color: color, index: nextSpecialIndex });
                         specialItemSpawned = true;
-                        lastSpecialItemSpawnFrame = frameCount; // 마지막 생성 프레임 기록
+                        lastSpecialItemSpawnFrame = frameCount;
                     }
                 }
 
@@ -351,10 +353,10 @@
             }
         }
 
-        function updateAndDrawItems() {
+        function updateAndDrawItems(delta) {
             for (let i = items.length - 1; i >= 0; i--) {
                 const item = items[i];
-                item.x -= gameSpeed;
+                item.x -= gameSpeed * delta;
 
                 if(item.type === 'special') {
                     ctx.fillStyle = item.color;
@@ -388,11 +390,11 @@
                     if (item.type === 'special' && !collectedSpecialItemIndices.includes(item.index)) {
                         playItemSound(true);
                         collectedSpecialItemIndices.push(item.index);
-                        score += 10; // 특별 아이템 획득 시 10점 추가
+                        score += 10;
                         
                         if (collectedSpecialItemIndices.length === SPECIAL_ITEMS.length) {
                             completedSpecialQuest = true;
-                            score += 100; // 최종 퀘스트 완료 보너스
+                            score += 100;
                             triggerFireworks(item.x, item.y, 150);
                         } else {
                             triggerFireworks(item.x, item.y, 50);
@@ -400,7 +402,7 @@
 
                     } else if (item.type === 'normal') {
                         playItemSound(false);
-                        score += 5; // 일반 아이템 획득 시 5점 추가
+                        score += 5;
                     }
                     items.splice(i, 1);
                 }
@@ -432,16 +434,16 @@
             constructor(x, y) {
                 this.x = x;
                 this.y = y;
-                this.size = Math.random() * 6 + 2; // 픽셀 크기
+                this.size = Math.random() * 6 + 2;
                 this.speedX = Math.random() * 8 - 4;
                 this.speedY = Math.random() * 8 - 4;
                 this.color = `hsl(${Math.random() * 360}, 100%, 50%)`;
                 this.life = 100;
             }
-            update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
-                this.life -= 1;
+            update(delta) {
+                this.x += this.speedX * delta;
+                this.y += this.speedY * delta;
+                this.life -= 1 * delta;
             }
             draw() {
                 ctx.fillStyle = this.color;
@@ -449,27 +451,28 @@
             }
         }
 
-        function handleParticles() {
+        function handleParticles(delta) {
             for (let i = particles.length - 1; i >= 0; i--) {
-                particles[i].update();
+                particles[i].update(delta);
                 particles[i].draw();
                 if (particles[i].life < 0) particles.splice(i, 1);
             }
         }
 
         // --- 충돌, 점수, 루프 등 ---
-        function updateAndDrawObstacles() {
+        function updateAndDrawObstacles(delta) {
             ctx.fillStyle = '#000000';
             for (let i = obstacles.length - 1; i >= 0; i--) {
-                let o = obstacles[i]; o.x -= gameSpeed;
+                let o = obstacles[i];
+                o.x -= gameSpeed * delta;
                 ctx.fillRect(o.x, o.y, o.width, o.height);
                 if (o.x + o.width < 0) obstacles.splice(i, 1);
             }
         }
         function checkCollision() {
-            if (isGameOver) return; // 게임 오버 시 중복 실행 방지
+            if (isGameOver) return;
             let collisionDetected = false;
-            if (player.y < 0 || player.y + player.height > 400) { // 위아래 경계 충돌 추가
+            if (player.y < 0 || player.y + player.height > 400) {
                 collisionDetected = true;
             }
             for (const o of obstacles) {
@@ -486,7 +489,7 @@
             }
         }
         function updateScore() {
-            const targetSpeedAt50 = initialSpeed * 1.7;
+            const targetSpeedAt50 = initialSpeed * 1.5;
             const targetScore = 50;
             const speedIncreasePerPoint = (targetSpeedAt50 - initialSpeed) / targetScore;
 
@@ -494,8 +497,6 @@
                 if (!o.passed && player.x > o.x + o.width) {
                     score++; 
                     o.passed = true;
-                    
-                    // 점수에 비례하여 속도가 지속적으로 증가하도록 수정
                     gameSpeed = initialSpeed + (score * speedIncreasePerPoint);
                 }
             });
@@ -504,7 +505,7 @@
             ctx.fillStyle = '#888888'; ctx.font = '16px "Press Start 2P"';
             ctx.textAlign = 'left'; ctx.fillText(`SCORE: ${score}`, 20, 35);
         }
-        function gameLoop() {
+        function gameLoop(currentTime) {
             if (gameState !== 'PLAYING') return;
             if (isGameOver) { 
                 gameState = 'GAMEOVER'; 
@@ -512,13 +513,18 @@
                 return; 
             }
             requestAnimationFrame(gameLoop);
+
+            const deltaTime = (currentTime - lastTime) || 0;
+            lastTime = currentTime;
+            const deltaMultiplier = deltaTime / (1000 / 60); // 60FPS 기준 보정값
+
             ctx.clearRect(0, 0, 800, 400);
-            player.update();
+            player.update(deltaMultiplier);
             player.draw();
             spawnEntities();
-            updateAndDrawObstacles();
-            updateAndDrawItems();
-            handleParticles();
+            updateAndDrawObstacles(deltaMultiplier);
+            updateAndDrawItems(deltaMultiplier);
+            handleParticles(deltaMultiplier);
             checkCollision();
             checkItemCollision();
             updateScore();
@@ -611,16 +617,20 @@
             collectedSpecialItemIndices = [];
             completedSpecialQuest = false;
             score = 0;
-            gameSpeed = initialSpeed; // 초기 속도로 리셋
+            gameSpeed = initialSpeed;
             frameCount = 0;
-            lastSpecialItemSpawnFrame = -999; // 쿨다운 타이머 리셋
+            lastSpecialItemSpawnFrame = -999;
             isGameOver = false;
             gameState = 'PLAYING';
             nameForm.style.display = 'none';
-            gameLoop();
+            lastTime = 0; // lastTime 초기화
+            requestAnimationFrame(gameLoop);
         }
 
         async function handleInput(e) {
+            if (e.target.closest('#sound-toggle') || e.target.closest('#name-form')) {
+                return;
+            }
             e.preventDefault();
             initAudio();
             if (gameState === 'START' || gameState === 'RANKING') {
@@ -646,7 +656,7 @@
             }
         });
         
-        canvas.addEventListener('click', handleInput);
+        window.addEventListener('click', handleInput);
         window.addEventListener('keydown', async (e) => {
             if (e.code === 'Space') await handleInput(e);
             if (e.key.toLowerCase() === 'r' && (gameState === 'START' || gameState === 'RANKING')) {
