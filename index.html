@@ -518,7 +518,6 @@
             requestAnimationFrame(gameLoop);
 
             let deltaTime = (currentTime - lastTime) || 0;
-            // 프레임 드랍 시 큰 점프를 방지하기 위해 deltaTime에 상한선을 둡니다 (40ms -> 25fps).
             deltaTime = Math.min(deltaTime, 40);
             lastTime = currentTime;
             const deltaMultiplier = deltaTime / (1000 / 60);
@@ -662,6 +661,7 @@
         });
         
         window.addEventListener('click', handleInput);
+        window.addEventListener('touchstart', handleInput); // 인앱 브라우저 터치 지원
         window.addEventListener('keydown', async (e) => {
             if (e.code === 'Space') await handleInput(e);
             if (e.key.toLowerCase() === 'r' && (gameState === 'START' || gameState === 'RANKING')) {
