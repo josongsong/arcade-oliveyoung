@@ -1,0 +1,24 @@
+{
+  "name": "arcade-oliveyoung",
+  "version": "1.0.0",
+  "description": "Oliveyoung 준법경영 아케이드",
+  "private": true,
+  "keywords": [
+    "vercel",
+    "serverless",
+    "game"
+  ],
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "dev": "serve -s public -l 3000",
+    "start": "serve -s public -l 3000",
+    "build": "echo 'static project - no build'"
+  },
+  "dependencies": {
+    "serve": "^14.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
